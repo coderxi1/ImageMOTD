@@ -8,9 +8,13 @@ import net.kyori.adventure.text.object.PlayerHeadObjectContents;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.logging.Level;
 
 public final class ImageMOTD extends JavaPlugin {
     private static final int MAX_MOTD_JSON_CHARS = 32000;
@@ -81,12 +85,17 @@ public final class ImageMOTD extends JavaPlugin {
                 "https://textures.minecraft.net/texture/46587cef9cf6bd1a453a6c6af165e938fc8ac8bc0f433355c2a6fc7b16f74b03",
                 "https://textures.minecraft.net/texture/5fbe2dd4617873f2d303a95645b8a11a7a4da96aad8b6e92be9b3bdd55bf0736",
                 "https://textures.minecraft.net/texture/9572813b0e78ae13c649551d9a1d1e9bf548d2c1684b5b9deeb849d2e329ce2c",
-                "https://textures.minecraft.net/texture/3992cc186b90603fa1af0b44062fbe3b4c9a09023bca7e7df59c2a00a912af79",
-                "https://textures.minecraft.net/texture/4f901928f2288b95121e8f62c0c9d93c79b8ad8c0fff3b35ec56affec9429ec8",
-                "https://textures.minecraft.net/texture/5fbe2dd4617873f2d303a95645b8a11a7a4da96aad8b6e92be9b3bdd55bf0736",
-                "https://textures.minecraft.net/texture/5fbe2dd4617873f2d303a95645b8a11a7a4da96aad8b6e92be9b3bdd55bf0736",
-                "https://textures.minecraft.net/texture/5fbe2dd4617873f2d303a95645b8a11a7a4da96aad8b6e92be9b3bdd55bf0736"
-                );
+        saveDefaultConfig();
+
+        String imageFileTxt = getConfig().getString("image-motd.image-file");
+        if (imageFileTxt == null || imageFileTxt.isBlank()) {
+            getLogger().severe("Missing config value: image-motd.image-file");
+            return;
+        }
+
+        Path imageFilePath = getDataFolder().toPath().resolve("images").resolve(imageFileTxt);
+        List<String> textureSources = loadTextureSources(imageFilePath);
+
         List<String> unsignedTextureValues = textureSources.stream()
                 .map(this::toUnsignedTextureValue)
                 .toList();
@@ -95,6 +104,23 @@ public final class ImageMOTD extends JavaPlugin {
             .color(NamedTextColor.WHITE)
             .shadowColor(ShadowColor.shadowColor(0xFFFFFFFF));
         getServer().motd(motd);
+    }
+
+    private List<String> loadTextureSources(Path imageFilePath) {
+        if (!Files.exists(imageFilePath)) {
+            getLogger().severe("Texture source file not found: " + imageFilePath);
+            return List.of();
+        }
+
+        try {
+            return Files.readAllLines(imageFilePath, StandardCharsets.UTF_8).stream()
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+        } catch (IOException ex) {
+            getLogger().log(Level.SEVERE, "Failed to read texture source file: " + imageFilePath, ex);
+            return List.of();
+        }
     }
 
     private String toUnsignedTextureValue(String textureSource) {
