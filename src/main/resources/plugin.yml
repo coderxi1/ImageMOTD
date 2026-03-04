@@ -1,4 +1,4 @@
 name: ImageMOTD
 version: '1.0'
 main: gg.tgb.imageMOTD.ImageMOTD
-api-version: '1.21'
+api-version: '1.21.9'
