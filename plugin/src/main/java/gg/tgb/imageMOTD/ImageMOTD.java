@@ -25,9 +25,9 @@ public final class ImageMOTD extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        String imageFileTxt = getConfig().getString("image-motd.image-file");
+        String imageFileTxt = getConfig().getString("image-motd.image");
         if (imageFileTxt == null || imageFileTxt.isBlank()) {
-            getLogger().severe("Missing config value: image-motd.image-file");
+            getLogger().severe("Missing config value: image-motd.image");
             return;
         }
 
@@ -39,8 +39,8 @@ public final class ImageMOTD extends JavaPlugin {
                 .toList();
 
         Component motd = buildUnsignedHeadMotd(unsignedTextureValues)
-            .color(NamedTextColor.WHITE)
-            .shadowColor(ShadowColor.shadowColor(0xFFFFFFFF));
+                .color(NamedTextColor.WHITE)
+                .shadowColor(ShadowColor.shadowColor(0xFFFFFFFF));
         getServer().motd(motd);
     }
 
