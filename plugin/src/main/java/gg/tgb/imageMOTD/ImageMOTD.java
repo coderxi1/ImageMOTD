@@ -1,11 +1,15 @@
 package gg.tgb.imageMOTD;
 
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.ShadowColor;
 import net.kyori.adventure.text.object.ObjectContents;
 import net.kyori.adventure.text.object.PlayerHeadObjectContents;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -16,10 +20,20 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 
-public final class ImageMOTD extends JavaPlugin {
+public final class ImageMOTD extends JavaPlugin implements Listener {
     private static final int MAX_MOTD_JSON_CHARS = 32000;
     private static final int HEADS_PER_ROW = 33;
     private static final int ROW_COUNT = 2;
+    private static Component imageMotd = null;
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPing(PaperServerListPingEvent event) {
+        int protocolVersion = event.getClient().getProtocolVersion();
+        // 1.21.2 - 1.21.11
+        if (protocolVersion >= 768 && protocolVersion < 775) {
+            event.motd(imageMotd);
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -38,10 +52,10 @@ public final class ImageMOTD extends JavaPlugin {
                 .map(this::toUnsignedTextureValue)
                 .toList();
 
-        Component motd = buildUnsignedHeadMotd(unsignedTextureValues)
+        imageMotd = buildUnsignedHeadMotd(unsignedTextureValues)
                 .color(NamedTextColor.WHITE)
                 .shadowColor(ShadowColor.shadowColor(0xFFFFFFFF));
-        getServer().motd(motd);
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
     private List<String> loadTextureSources(Path imageFilePath) {
